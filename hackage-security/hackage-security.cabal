@@ -44,10 +44,6 @@ flag base48
   description: Are we using @base@ 4.8 or later?
   manual: False
 
-flag use-network-uri
-  description: Are we using @network-uri@?
-  manual: False
-
 flag old-directory
   description: Use @directory@ < 1.2 and @old-time@
   manual:      False
@@ -189,44 +185,7 @@ library
   else
     build-depends: base < 4.8, old-locale == 1.0.*
 
-  -- The URI type got split out off the network package after version 2.5, and
-  -- moved to a separate network-uri package. Since we don't need the rest of
-  -- network here, it would suffice to rely only on network-uri:
-  --
-  -- > if flag(use-network-uri)
-  -- >   build-depends: network-uri >= 2.6 && < 2.7
-  -- > else
-  -- >   build-depends: network     >= 2.5 && < 2.6
-  --
-  -- However, if we did the same in hackage-security-HTTP, Cabal would consider
-  -- those two flag choices (hackage-security:use-network-uri and
-  -- hackage-security-HTTP:use-network-uri) to be completely independent; but
-  -- they aren't: if it links hackage-security against network-uri and
-  -- hackage-security-HTTP against network, we will get type errors when
-  -- hackage-security-HTTP tries to pass a URI to hackage-security.
-  --
-  -- It might seem we can solve this problem by re-exporting the URI type in
-  -- hackage-security and avoid the dependency in hackage-security-HTTP
-  -- altogether. However, this merely shifts the problem: hackage-security-HTTP
-  -- relies on the HTTP library which--surprise!--makes the same choice between
-  -- depending on network or network-uri. Cabal will not notice that we cannot
-  -- build hackage-security and hackage-security-HTTP against network-uri but
-  -- HTTP against network.
-  --
-  -- We solve the problem by explicitly relying on network-2.6 when choosing
-  -- network-uri. This dependency is redundant, strictly speaking. However, it
-  -- serves as a proxy for forcing flag choices: since all packages in a
-  -- solution must be linked against the same version of network, having one
-  -- version of network in one branch of the conditional and another version of
-  -- network in the other branch forces the choice to be consistent throughout.
-  -- (Note that the HTTP library does the same thing, though in this case the
-  -- dependency in network is not redundant.)
-  if flag(use-network-uri)
-    build-depends: network-uri >= 2.6 && < 2.7,
-                   network     >= 2.6 && < 2.9
-                            || >= 3.0 && < 3.2
-  else
-    build-depends: network     >= 2.5 && < 2.6
+  build-depends: network-uri >= 2.6 && < 2.7
 
   if impl(ghc >= 7.8)
      other-extensions: RoleAnnotations
